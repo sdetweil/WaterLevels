@@ -27,6 +27,7 @@ Module.register("WaterLevels", {
   pointColors: [],
 	okColor: '#2196f3',
 	errorColor: '#ff0000',
+	useColorArray: false,
 
   getScripts: function () {
     return ["moment.js", "modules/" + this.name + "/node_modules/chart.js/dist/Chart.min.js"];
@@ -92,33 +93,40 @@ Module.register("WaterLevels", {
             canvas = document.createElement("canvas");
             canvas.id = "myChart" + this_pin;
             c.appendChild(canvas);
-						self.overrideChartLine();
+						if(self.useColorArray) {
+							self.overrideChartLine();
+						}
           }
-          // fill in the point color data, all or just trailing
-					// get pointer (makes code easier to read)
-					var p = self.pointColors[pin_index]
-					if(p.length==0)
-						// initialize it
-						p=Array(self.data[this_pin].length).fill(self.okColor)
-					else
-						// set to default
-						p.fill(self.okColor)
-					self.pointColors[pin_index]=p
 
-					//Log.log("color array length="+p.length);
+					if(self.useColorArray) {
+	          // fill in the point color data, all or just trailing
+						// get pointer (makes code easier to read)
+						var p = self.pointColors[pin_index]
+						if(p.length==0)
+							// initialize it
+							p=Array(self.data[this_pin].length).fill(self.okColor)
+						else
+							// set to default
+							p.fill(self.okColor)
+						self.pointColors[pin_index]=p
 
-					// get data pointer (makes code easier to read)
-					var d= self.data[this_pin]
-					// loop thru the data
-          for (var i = 0; i < d.length; i++) {
-						 //Log.log("checking value for index="+i+"="+d[i].y+" is less than "+self.config.pinLimits[pin_index]);
-						 // if the value is below the warning limit
- 		         if (d[i].y < self.config.pinLimits[pin_index]) {
-								//Log.log("value for index="+i+"="+d[i].value);
-								// set the warning color
-  	      	  	p[i]=self.errorColor;
-   		       }        		   
-          } 
+						// get data pointer (makes code easier to read)
+						var d= self.data[this_pin]
+						// loop thru the data
+      	    for (var i = 0; i < d.length; i++) {
+							 //Log.log("checking value for index="+i+"="+d[i].y+" is less than "+self.config.pinLimits[pin_index]);
+							 // if the value is below the warning limit
+	 		         if (d[i].y < self.config.pinLimits[pin_index]) {
+									//Log.log("value for index="+i+"="+d[i].value);
+									// set the warning color
+  	  	    	  	p[i]=self.errorColor;
+   		  	     }        		   
+          	} 
+					}
+					else{
+						self.pointColors[pin_index]=self.okColor
+					}
+					
           // if the chart hasn't been created
           if (self.charts[pin_index] == null) {
             // create it now
@@ -130,8 +138,8 @@ Module.register("WaterLevels", {
                       xAxisID: 'dates',
                       data: self.data[this_pin],
                       fill: true,
-                      borderColor: '#2196f3', // Add custom color border (Line)
-                      backgroundColor:self.pointColors[pin_index]  //196f3',
+                      borderColor: self.okColor, // Add custom color border (Line)
+                      backgroundColor: self.pointColors[pin_index],
                     },
                   ]
                 },
