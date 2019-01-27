@@ -17,6 +17,10 @@ Module.register("WaterLevels", {
     blynk_url: "http://blynk-cloud.com/",
     dayrange: 7,
     pinLimits: [0,1800],
+    skipInfo: 5,
+    okColor: '#2196f3',
+    errorColor: '#ff0000',
+
   },
   url: "",
   loaded: false,
@@ -25,9 +29,6 @@ Module.register("WaterLevels", {
   suspended: false,
   charts: [],
   pointColors: [],
-	okColor: '#2196f3',
-	errorColor: '#ff0000',
-	useColorArray: false,
 
   getScripts: function () {
     return ["moment.js", "modules/" + this.name + "/node_modules/chart.js/dist/Chart.min.js"];
@@ -73,6 +74,7 @@ Module.register("WaterLevels", {
       // make sure we don't start before the data gets here
       if (!this.loaded) {
         this.loaded = true;
+        self.overrideChartLine();
         return self.wrapper;
       } else {
         // loop thru the data from the blynk server
@@ -93,136 +95,100 @@ Module.register("WaterLevels", {
             canvas = document.createElement("canvas");
             canvas.id = "myChart" + this_pin;
             c.appendChild(canvas);
-						if(self.useColorArray) {
-							self.overrideChartLine();
-						}
           }
+          // if the chart has been created
+          if (self.charts[pin_index] != null) {
+              // destroy it, update doesn't work reliably
+              self.charts[pin_index].destroy();
+              // make it unreferenced
+              self.charts[pin_index] = 0;
+          }
+          // create it now
+          self.charts[pin_index] = new Chart(canvas, {
+              type: 'line',
+              showLine: true,
+              data: {
+                datasets: [{
+                    xAxisID: 'dates',
+                    data: self.data[this_pin].data,
+                    fill: true,
+                    borderColor: '#2196f3', // Add custom color border (Line)
+                    backgroundColor:self.data[this_pin].gradient //self.pointColors[pin_index]  //'#2196f3',
+                  },
+                ]
+              },
+              options: {
+                legend: {
+                  display: false
+                },
+                tooltips: {
+                  enabled: false,
+                  displayColors: false
+                },
+                responsive: false,
+                elements: {
+                  point: {
+                    radius: 0
+                  },
+                  line: {
+                    tension: 0, // disables bezier curves
+                  }
+                },
+                scales: {
+                  xAxes: [{
+                      id: 'dates',
+                      type: 'time',
+                      distribution: 'linear',
+                      scaleLabel: {
+                        display: true,
+                        labelString: self.config.labels[pin_index] + " - last " + self.config.dayrange + " days" + " "+ moment().format('hh:mm:ss'),
+                        fontColor: 'white'
+                      },
+                      gridLines: {
+                        display: false,
+                        zeroLineColor: '#ffcc33'
+                      },
+                      time: {
+                        unit: 'minute'
+                      },
+                      bounds: 'data',
+                      ticks: {
+                        display: false,
+                        maxRotation: 90,
+                        source: 'data',
+                        maxTicksLimit: self.data[this_pin].data.length,
+                      },
+                    }
+                  ],
+                  yAxes: [{
+                      display: true,
+                      scaleLabel: {
+                        display: true,
+                        labelString: self.config.yaxis_legend[pin_index],
+                        fontColor: 'white'
+                      },
+                      gridLines: {
+                        display: true,
+                        color: "#FFFFFF",
+                        zeroLineColor: '#ffcc33',
+                        fontColor: 'white',
+                        scaleFontColor: 'white',
+                      },
 
-					if(self.useColorArray) {
-	          // fill in the point color data, all or just trailing
-						// get pointer (makes code easier to read)
-						var p = self.pointColors[pin_index]
-						if(p.length==0)
-							// initialize it
-							p=Array(self.data[this_pin].length).fill(self.okColor)
-						else
-							// set to default
-							p.fill(self.okColor)
-						self.pointColors[pin_index]=p
-
-						// get data pointer (makes code easier to read)
-						var d= self.data[this_pin]
-						// loop thru the data
-      	    for (var i = 0; i < d.length; i++) {
-							 //Log.log("checking value for index="+i+"="+d[i].y+" is less than "+self.config.pinLimits[pin_index]);
-							 // if the value is below the warning limit
-	 		         if (d[i].y < self.config.pinLimits[pin_index]) {
-									//Log.log("value for index="+i+"="+d[i].value);
-									// set the warning color
-  	  	    	  	p[i]=self.errorColor;
-   		  	     }        		   
-          	} 
-					}
-					else{
-						self.pointColors[pin_index]=self.okColor
-					}
-					
-          // if the chart hasn't been created
-          if (self.charts[pin_index] == null) {
-            // create it now
-            self.charts[pin_index] = new Chart(canvas, {
-                type: 'line',
-                showLine: true,
-                data: {
-                  datasets: [{
-                      xAxisID: 'dates',
-                      data: self.data[this_pin],
-                      fill: true,
-                      borderColor: self.okColor, // Add custom color border (Line)
-                      backgroundColor: self.pointColors[pin_index],
-                    },
+                      ticks: {
+                        beginAtZero: true,
+                        source: 'data',
+                        min: self.config.ranges[pin_index].min,
+                        suggestedMax: self.config.ranges[pin_index].max,
+                        stepSize: self.config.ranges[pin_index].stepSize,
+                        fontColor: 'white'
+                      },
+                    }
                   ]
                 },
-                options: {
-                  legend: {
-                    display: false
-                  },
-                  tooltips: {
-                    enabled: false,
-                    displayColors: false
-                  },
-                  responsive: false,
-                  elements: {
-                    point: {
-                      radius: 0
-                    },
-                    line: {
-                      tension: 0, // disables bezier curves
-                    }
-                  },
-                  scales: {
-                    xAxes: [{
-                        id: 'dates',
-                        type: 'time',
-                        distribution: 'linear',
-                        scaleLabel: {
-                          display: true,
-                          labelString: self.config.labels[pin_index] + " - last " + self.config.dayrange + " days",
-                          fontColor: 'white'
-                        },
-                        gridLines: {
-                          display: false,
-                          zeroLineColor: '#ffcc33'
-                        },
-                        time: {
-                          unit: 'minute'
-                        },
-                        bounds: 'data',
-                        ticks: {
-                          display: false,
-                          maxRotation: 90,
-                          source: 'data',
-                          maxTicksLimit: self.data[this_pin].length,
-                        },
-                      }
-                    ],
-                    yAxes: [{
-                        display: true,
-                        scaleLabel: {
-                          display: true,
-                          labelString: self.config.yaxis_legend[pin_index],
-                          fontColor: 'white'
-                        },
-                        gridLines: {
-                          display: true,
-                          color: "#FFFFFF",
-                          zeroLineColor: '#ffcc33',
-                          fontColor: 'white',
-                          scaleFontColor: 'white',
-                        },
-
-                        ticks: {
-                          beginAtZero: true,
-                          source: 'data',
-                          min: self.config.ranges[pin_index].min,
-                          suggestedMax: self.config.ranges[pin_index].max,
-                          stepSize: self.config.ranges[pin_index].stepSize,
-                          //max: self.data[this_pin].length,
-                          fontColor: 'white'
-                        },
-                      }
-                    ]
-                  },
-                }
-              });
-          } else {
-            // update the chart with new data
-            Log.log("calling update for chart for pin="+this_pin);
-            var l = self.charts[pin_index].options.scales.xAxes[0].scaleLabel.labelString+" : "
-            l=l.substring(0,l.indexOf(":")+1) + " "+ moment().format('hh:mm:ss')
-            self.charts[pin_index].options.scales.xAxes[0].scaleLabel.labelString=l;
-            self.charts[pin_index].update();
-          }
+              }
+            }
+          );
         }
       }
     }
@@ -252,62 +218,76 @@ Module.register("WaterLevels", {
 },
 
   overrideChartLine: function ()
-	{
-			// save the original line element so we can still call it's 
-// draw method after we build the linear gradient
-var origLineElement = Chart.elements.Line;
+  {
+      // save the original line element so we can still call it's 
+      // draw method after we build the linear gradient
+    var origLineElement = Chart.elements.Line;
 
-// define a new line draw method so that we can build a linear gradient
-// based on the position of each point
-Chart.elements.Line = Chart.Element.extend({
-  draw: function() {
-    var vm = this._view;
-    var backgroundColors = this._chart.controller.data.datasets[this._datasetIndex].backgroundColor;
-    var points = this._children;
-    var ctx = this._chart.ctx;
-    var minX = points[0]._model.x;
-    var maxX = points[points.length - 1]._model.x;
-    var linearGradient = ctx.createLinearGradient(minX, 0, maxX, 0);
+    // define a new line draw method so that we can build a linear gradient
+    // based on the position of each point
+    Chart.elements.Line = Chart.Element.extend({
+      draw: function() {
+        var vm = this._view;
+        var backgroundColors = this._chart.controller.data.datasets[this._datasetIndex].backgroundColor;
+        var points = this._children;
+        var ctx = this._chart.ctx;
+        var minX = points[0]._model.x;
+        var maxX = points[points.length - 1]._model.x;
+        var linearGradient = ctx.createLinearGradient(minX, 0, maxX, 0);
 
-		if(typeof backgroundColors != 'string'){
-	
-    // iterate over each point to build the gradient
-    points.forEach(function(point, i) {
-      // `addColorStop` expects a number between 0 and 1, so we
-      // have to normalize the x position of each point between 0 and 1
-      // and round to make sure the positioning isn't too percise 
-      // (otherwise it won't line up with the point position)
-      var colorStopPosition = self.roundNumber((point._model.x - minX) / (maxX - minX), 2);
-      // special case for the first color stop
-      if (i === 0) {
-        linearGradient.addColorStop(0, backgroundColors[i]);
-      } else {
-        // only add a color stop if the color is different
-        if ( backgroundColors[i] !== backgroundColors[i-1]) {
-          // add a color stop for the prev color and for the new color at the same location
-          // this gives a solid color gradient instead of a gradient that fades to the next color
-          linearGradient.addColorStop(colorStopPosition, backgroundColors[i - 1]);
-          linearGradient.addColorStop(colorStopPosition, backgroundColors[i]);
-        }
-      }
+        // if not a single color
+        if(typeof backgroundColors != 'string'){			
+          // but is array of color strings
+          if(	typeof backgroundColors[0] === 'string') {
+            // iterate over each point to build the gradient
+            // same number of color values as data points another O(n) 
+            points.forEach(function(point, i) {
+              // `addColorStop` expects a number between 0 and 1, so we
+              // have to normalize the x position of each point between 0 and 1
+              // and round to make sure the positioning isn't too percise 
+              // (otherwise it won't line up with the point position)
+              var colorStopPosition = self.roundNumber((point._model.x - minX) / (maxX - minX), 2);
+              // special case for the first color stop
+              if (i === 0) {
+                linearGradient.addColorStop(0, backgroundColors[i]);
+              } 
+              else {
+                // only add a color stop if the color is different
+                if ( backgroundColors[i] !== backgroundColors[i-1]) {
+                  // add a color stop for the prev color and for the new color at the same location
+                  // this gives a solid color gradient instead of a gradient that fades to the next color
+                  linearGradient.addColorStop(colorStopPosition, backgroundColors[i - 1]);
+                  linearGradient.addColorStop(colorStopPosition, backgroundColors[i]);
+                }
+              }  // end of not first data element 
+            });  // end of data points loop
+          } // end of color array gradient builder
+          // must be a gradient fence position list
+          else {
+            Log.log("processing fence positions count="+backgroundColors.length)
+            // loop thru the fence positions
+            backgroundColors.forEach(function(fencePosition){
+                var colorStopPosition = self.roundNumber(fencePosition.offset / points.length, 2);
+                linearGradient.addColorStop(colorStopPosition,fencePosition.color)
+            });  // end of gradient edge loop
+          }  // end of gradient builder 
+
+          // save the linear gradient in background color property
+          // since this is what is used for ctx.fillStyle when the fill is rendered
+          vm.backgroundColor = linearGradient;
+
+        } // end of just a single color, do nothing call original draw
+
+        // now draw the lines (using the original draw method)
+        origLineElement.prototype.draw.apply(this);
+      }   // end of draw function
+    });   // end of extend
+
+    // we have to overwrite the datasetElementType property in the line controller
+    // because it is set before we can extend the line element (this ensures that 
+    // the line element used by the chart is the one that we extended above)
+    Chart.controllers.line = Chart.controllers.line.extend({
+      datasetElementType: Chart.elements.Line,
     });
-
-    // save the linear gradient in background color property
-    // since this is what is used for ctx.fillStyle when the fill is rendered
-    vm.backgroundColor = linearGradient;
-
-		}
-
-    // now draw the lines (using the original draw method)
-    origLineElement.prototype.draw.apply(this);
-  }               
-});
-
-// we have to overwrite the datasetElementType property in the line controller
-// because it is set before we can extend the line element (this ensures that 
-// the line element used by the chart is the one that we extended above)
-Chart.controllers.line = Chart.controllers.line.extend({
-  datasetElementType: Chart.elements.Line,
-});
-	},
+	}, // end of override function
 });
