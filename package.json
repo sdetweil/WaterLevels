@@ -2,15 +2,21 @@
   "name": "WaterLevels",
   "version": "1.0.0",
   "description": "Magic Mirror module to display water usage and levels from Blynk project",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdetweil/WaterLevels.git"
+  },
   "keywords": [
-    "Water Levels"
+    "Water Levels blynk"
   ],
   "author": "Sam Detweiler",
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sdetweil/WaterLevels/issues"
+  },
   "dependencies": {
     "chart.js": "2.5.0",
     "path": "^0.12.7",
-    "process": "^0.11.10",
     "moment": "^2.23.0"
   }
 }

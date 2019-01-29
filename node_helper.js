@@ -1,8 +1,8 @@
 /* Magic Mirror
- * Module: MMM-Tube
+ * Module: WaterLevels
  *
  * Node_helper written by sdetweil
- *  THANK YOU, Fantastic work!
+ *  
  */
 const NodeHelper = require('node_helper');
 const request = require('request');
@@ -24,7 +24,7 @@ module.exports = NodeHelper.create({
     pins_loaded: [],
     pin_index: 0,
     results: {},
-    using_chartjs: true,
+   // using_chartjs: true,
     suspended: false,
     timer: null,
     lastUpdated: 0,
@@ -57,26 +57,26 @@ module.exports = NodeHelper.create({
 
       		      var point = {}
           		  point.x = new Date(parseInt(info[1]))
-              	if (self.using_chartjs == false) {
+        /*      	if (self.using_chartjs == false) {
 	                // add it to the array for this pin
  		              if (info[0].indexOf('.') != -1)
       	            point.y = parseFloat(info[0]);
 	                else
   	                point.y = parseInt(info[0]);
     	          } 
-								else {
+								else { */
       	          if (info[0].indexOf('.') != -1)
                 	  point.y = parseFloat(info[0]);
 	                else
   	                point.y = (parseInt(info[0]));
-    	          }
+    	     //     }
       	        data_array.unshift(point);
 								var x = {}
 								x.offset=count-1			
 
 								// get value is an error as numeric
 								var was_error =0+(point.y< self.config.pinLimits[pin_index])
-								// if thsi is the first time, or the color doesn't match as expected
+								// if this is the first time, or the color doesn't match as expected
 								if(count==1 || gradient[0].color !== self.config.display_colors[was_error]){
 										// if not the first time
 										if(count!=1){
@@ -138,18 +138,18 @@ module.exports = NodeHelper.create({
           if (moment(parseInt(info[1])).diff(now, 'days') > (-1 * parseInt(self.config.dayrange))) {
             var point = {}
             point.x = new Date(parseInt(info[1]))
-              if (self.using_chartjs == false) {
+         /*     if (self.using_chartjs == false) {
                 // add it to the array for this pin
                 if (info[0].indexOf('.') != -1)
                   point.y = parseFloat(info[0]);
                 else
                   point.y = parseInt(info[0]);
-              } else {
+              } else { */
                 if (info[0].indexOf('.') != -1)
                   point.y = parseFloat(info[0]);
                 else
                   point.y = (parseInt(info[0]));
-              }
+            //  }
               data_array.push(point);
             // console.log("have info for date="+info[2]+"="+info[0])
           }
