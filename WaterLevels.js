@@ -18,8 +18,9 @@ Module.register("WaterLevels", {
     dayrange: 7,
     pinLimits: [0,1800],
     skipInfo: 5,
-    okColor: '#2196f3',
-    errorColor: '#ff0000',
+		display_colors: ['#2196f3','#ff0000'],
+  //  okColor: '#2196f3',
+  //  errorColor: '#ff0000',
 
   },
   url: "",

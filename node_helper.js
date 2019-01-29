@@ -34,7 +34,6 @@ module.exports = NodeHelper.create({
       var pin=self.config.Pins[pin_index]
       var data_array = [];
 			//console.log("data.length="+data.length);
-   		var g={}
 			var gradient=[];
 			var count=0;
 			
@@ -73,25 +72,22 @@ module.exports = NodeHelper.create({
     	          }
       	        data_array.unshift(point);
 								var x = {}
-								x.offset=count-1									
-								if(point.y< self.config.pinLimits[pin_index]){
-									if(count==1 || gradient[0].color!=self.config.errorColor){
+								x.offset=count-1			
+
+								// get value is an error as numeric
+								var was_error =0+(point.y< self.config.pinLimits[pin_index])
+								// if thsi is the first time, or the color doesn't match as expected
+								if(count==1 || gradient[0].color !== self.config.display_colors[was_error]){
+										// if not the first time
 										if(count!=1){
+												// add a stop for the current value
 												gradient.unshift({'offset':x.offset-1,'color':gradient[0].color})
 										}
-										x.color=self.config.errorColor;
+										// set the color of the new stop
+										x.color=self.config.display_colors[was_error];
+										// add the new color stop 
 										gradient.unshift(x)									
-									}
 								}	
-								else {
-									if(count==1 || gradient[0].color!=self.config.okColor){
-										if(count!=1){
-												gradient.unshift({'offset':x.offset-1,'color':gradient[0].color})
-										}
-										x.color=self.config.okColor;
-										gradient.unshift(x)									
-									}
-								}
         	     //console.log("have info for date="+info[1]+"="+info[0])
           		}
 							else {
@@ -101,6 +97,7 @@ module.exports = NodeHelper.create({
 						}
 					}
       }
+			var g = {}
 			// get the top gradient entry			
 			g=gradient.shift()
 			// put it back on
@@ -213,7 +210,7 @@ module.exports = NodeHelper.create({
       self.getPinValue(self.url, self.config.Pins[index], function (pin, value) {
         console.log("have data for pin=" + pin + " value=" + value);
         self.pins_loaded.push(pin);
-        // add this value on tpo the end
+        // add this value on to the end
         var v = self.results[pin].data
         var point = {}
         point.x = new Date()
@@ -246,10 +243,9 @@ module.exports = NodeHelper.create({
 				// get the last color in the gradient
 				var last_color=self.results[pin].gradient[self.results[pin].gradient.length-1].color
 
-				// if the point just added is below the limit
-				if(point.y< self.config.pinLimits[index]){
-					// is the last color error? 
-					if(last_color!==self.config.errorColor){
+				// get if this pint value is an error (as numeric)
+				var was_error =0+(point.y< self.config.pinLimits[index])
+				if(last_color !== self.config.display_colors[was_error]){
   					// no.. need to add two stops
 						var u = {}
 							u.offset=self.results[pin].data.length-1
@@ -257,27 +253,10 @@ module.exports = NodeHelper.create({
 						self.results[pin].gradient.push(u)
 							u = {}
 							u.offset=self.results[pin].data.length-1					
-							u.color = self.config.errorColor
+							u.color = self.config.display_colors[was_error]
 						self.results[pin].gradient.push(u)										
-					}
 				}
-				// no, value is good
-				else{
-					// is the last color a good color
-					if(last_color!==self.config.okColor){
-						// no, need to add two stops. 
-  					// no.. need to add two stops
-						var u = {}
-							u.offset=self.results[pin].data.length-1
-							u.color = last_color
-						self.results[pin].gradient.push(u)
-							u = {}
-							u.offset=self.results[pin].data.length-1					
-							u.color = self.config.okColor
-						self.results[pin].gradient.push(u)	
-					}
-				}
-
+	
         if (self.pins_loaded.length != self.config.Pins.length)
           self.getPins(url, callback);
         else
