@@ -15,7 +15,7 @@
     "url": "https://github.com/sdetweil/WaterLevels/issues"
   },
   "dependencies": {
-    "chart.js": "2.5.0",
+    "chart.js": "2.9.4",
     "path": "^0.12.7",
     "moment": "^2.23.0"
   }
